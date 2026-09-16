@@ -25,10 +25,11 @@ class PersonDeleteFailureTest {
     private lateinit var db: AppDatabase
     private lateinit var repository: PersonRepository
     private lateinit var context: Context
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
 
     @Before
     fun setup() {
+        testDispatcher = StandardTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
@@ -44,7 +45,7 @@ class PersonDeleteFailureTest {
     }
 
     @Test
-    fun testFirestoreDeleteSuccessDeletesLocalRecord() = runTest {
+    fun testFirestoreDeleteSuccessDeletesLocalRecord() = runTest(testDispatcher) {
         val household = Household(
             householdUuid = "H-DEL-SUCC-001",
             houseNo = "111/1",
@@ -74,24 +75,23 @@ class PersonDeleteFailureTest {
             }
         }
         val excelImportUseCase = com.example.domain.ExcelImportUseCase(db)
-        val viewModel = PersonViewModel(repository, excelImportUseCase, successSyncHelper)
+        val viewModel = PersonViewModel(repository, excelImportUseCase, successSyncHelper, testDispatcher)
 
         var resultSuccess: Boolean? = null
         var resultMessage: String? = null
 
-        viewModel.delete(insertedPerson!!) { success, message ->
+        val job = viewModel.delete(insertedPerson!!) { success, message ->
             resultSuccess = success
             resultMessage = message
         }
+        job.join()
 
-        advanceUntilIdle()
-
-        assertTrue(resultSuccess == true)
+        assertEquals("Should succeed: $resultMessage, resultSuccess=$resultSuccess", true, resultSuccess)
         assertNull(repository.getPersonByUuid("P-DEL-SUCC-001"))
     }
 
     @Test
-    fun testFirestoreDeleteFailureStillDeletesLocalRecord() = runTest {
+    fun testFirestoreDeleteFailureStillDeletesLocalRecord() = runTest(testDispatcher) {
         val household = Household(
             householdUuid = "H-DEL-FAIL-001",
             houseNo = "999/2",
@@ -121,17 +121,16 @@ class PersonDeleteFailureTest {
             }
         }
         val excelImportUseCase = com.example.domain.ExcelImportUseCase(db)
-        val viewModel = PersonViewModel(repository, excelImportUseCase, failingSyncHelper)
+        val viewModel = PersonViewModel(repository, excelImportUseCase, failingSyncHelper, testDispatcher)
 
         var resultSuccess: Boolean? = null
         var resultMessage: String? = null
 
-        viewModel.delete(insertedPerson!!) { success, message ->
+        val job = viewModel.delete(insertedPerson!!) { success, message ->
             resultSuccess = success
             resultMessage = message
         }
-
-        advanceUntilIdle()
+        job.join()
 
         // Local deletion succeeds even if cloud deletion fails
         assertTrue(resultSuccess == true)
@@ -144,7 +143,7 @@ class PersonDeleteFailureTest {
     }
 
     @Test
-    fun testDeletedRecordCannotResurrectDuringSync() = runTest {
+    fun testDeletedRecordCannotResurrectDuringSync() = runTest(testDispatcher) {
         val household = Household(
             householdUuid = "H-RESURRECT-001",
             houseNo = "222/2",

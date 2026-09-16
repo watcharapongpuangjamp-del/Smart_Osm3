@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -40,7 +41,8 @@ import com.example.data.sync.SyncState
 class PersonViewModel(
     private val repository: PersonRepository,
     private val excelImportUseCase: com.example.domain.ExcelImportUseCase,
-    private val syncHelper: RoomFirestoreSyncHelper? = null
+    private val syncHelper: RoomFirestoreSyncHelper? = null,
+    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     init {
@@ -286,18 +288,16 @@ class PersonViewModel(
     fun updateHousehold(household: Household) = viewModelScope.launch { 
         repository.updateHousehold(household.copy(lastModified = System.currentTimeMillis())) 
     }
-    fun deleteHousehold(household: Household, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
+    fun deleteHousehold(household: Household, onResult: (Boolean, String?) -> Unit = { _, _ -> }): Job =
         viewModelScope.launch {
             try {
                 android.util.Log.d("PersonViewModel", "Starting delete household: id=${household.id}, uuid=${household.householdUuid}")
                 
                 // 1. Delete locally FIRST (must NOT be blocked by Firebase/Firestore failure)
-                val result = withContext(Dispatchers.IO) { repository.deleteHousehold(household) }
+                val result = withContext(ioDispatcher) { repository.deleteHousehold(household) }
                 if (result.isFailure) {
                     val ex = result.exceptionOrNull()
-                    withContext(Dispatchers.Main) {
-                        onResult(false, ex?.message ?: "เกิดข้อผิดพลาดในการลบบ้าน")
-                    }
+                    onResult(false, ex?.message ?: "เกิดข้อผิดพลาดในการลบบ้าน")
                     return@launch
                 }
 
@@ -305,7 +305,7 @@ class PersonViewModel(
                 var cloudError: String? = null
                 if (syncHelper != null && syncHelper.isFirebaseConfigured()) {
                     syncHelper.queueDeletion(household.householdUuid, "household")
-                    val cloudResult = withContext(Dispatchers.IO) { syncHelper.deleteHouseholdFromFirestore(household.householdUuid) }
+                    val cloudResult = withContext(ioDispatcher) { syncHelper.deleteHouseholdFromFirestore(household.householdUuid) }
                     if (cloudResult.isSuccess) {
                         syncHelper.removeDeletionQueue(household.householdUuid)
                     } else {
@@ -313,16 +313,13 @@ class PersonViewModel(
                     }
                 }
 
-                withContext(Dispatchers.Main) {
-                    android.util.Log.d("PersonViewModel", "Household deleted successfully (Local)")
-                    onResult(true, cloudError)
-                }
+                android.util.Log.d("PersonViewModel", "Household deleted successfully (Local)")
+                onResult(true, cloudError)
             } catch (e: Exception) {
                 android.util.Log.e("PersonViewModel", "Exception deleting household", e)
                 onResult(false, e.message ?: "เกิดข้อผิดพลาดที่ไม่คาดคิด")
             }
         }
-    }
     
     suspend fun getHouseholdById(id: Long): Household? = repository.getHouseholdById(id)
     suspend fun getHouseholdByNo(houseNo: String): Household? = repository.getHouseholdByNo(houseNo)
@@ -409,19 +406,19 @@ class PersonViewModel(
     fun update(person: Person) = viewModelScope.launch { 
         repository.update(person.copy(lastModified = System.currentTimeMillis())) 
     }
-    fun delete(person: Person, onResult: (Boolean, String?) -> Unit = { _, _ -> }) {
+    fun delete(person: Person, onResult: (Boolean, String?) -> Unit = { _, _ -> }): Job =
         viewModelScope.launch {
             try {
                 android.util.Log.d("PersonViewModel", "Starting delete person: id=${person.id}, uuid=${person.personUuid}")
                 
                 // 1. Delete locally FIRST (must NOT be blocked by Firebase/Firestore failure)
-                withContext(Dispatchers.IO) { repository.delete(person) }
+                withContext(ioDispatcher) { repository.delete(person) }
 
                 // 2. Try delete from Firestore, queue if failed
                 var cloudError: String? = null
                 if (syncHelper != null && syncHelper.isFirebaseConfigured()) {
                     syncHelper.queueDeletion(person.personUuid, "person")
-                    val cloudResult = withContext(Dispatchers.IO) { syncHelper.deletePersonFromFirestore(person.personUuid) }
+                    val cloudResult = withContext(ioDispatcher) { syncHelper.deletePersonFromFirestore(person.personUuid) }
                     if (cloudResult.isSuccess) {
                         syncHelper.removeDeletionQueue(person.personUuid)
                     } else {
@@ -429,16 +426,13 @@ class PersonViewModel(
                     }
                 }
 
-                withContext(Dispatchers.Main) {
-                    android.util.Log.d("PersonViewModel", "Person deleted successfully (Local)")
-                    onResult(true, cloudError)
-                }
+                android.util.Log.d("PersonViewModel", "Person deleted successfully (Local)")
+                onResult(true, cloudError)
             } catch (e: Exception) {
                 android.util.Log.e("PersonViewModel", "Exception deleting person", e)
                 onResult(false, e.message ?: "เกิดข้อผิดพลาดที่ไม่คาดคิด")
             }
         }
-    }
     
     suspend fun getPersonById(id: Long): Person? = repository.getPersonById(id)
     suspend fun getPersonByNationalId(nationalId: String): Person? = repository.getPersonByNationalId(nationalId)
