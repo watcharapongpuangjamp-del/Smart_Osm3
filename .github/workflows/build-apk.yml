@@ -77,13 +77,13 @@ jobs:
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "test_exit_code=$TEST_EXIT_CODE" >> $GITHUB_ENV
           if [ $TEST_EXIT_CODE -ne 0 ]; then
-            echo "⚠ Some tests failed but build continues (non-blocking)"
+            echo "Unit tests failed"
+            exit $TEST_EXIT_CODE
           else
             echo "✓ All unit tests passed"
           fi
         env:
           GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
-        continue-on-error: true
 
       - name: Build Debug APK
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type == 'debug'
@@ -167,3 +167,4 @@ jobs:
           echo "Build Status: ${{ job.status }}"
           echo "Event: ${{ github.event_name }}"
           echo "Branch: ${{ github.ref_name }}"
+
