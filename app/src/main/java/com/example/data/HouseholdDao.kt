@@ -20,6 +20,23 @@ interface HouseholdDao {
     @Query("SELECT * FROM households WHERE houseNo = :houseNo LIMIT 1")
     suspend fun getHouseholdByNo(houseNo: String): Household?
 
+    @Query("""
+        SELECT * FROM households
+        WHERE houseNo = :houseNo
+          AND villageNo = :villageNo
+          AND subdistrict = :subdistrict
+          AND district = :district
+          AND province = :province
+        LIMIT 1
+    """)
+    suspend fun getHouseholdByAddress(
+        houseNo: String,
+        villageNo: String,
+        subdistrict: String,
+        district: String,
+        province: String
+    ): Household?
+
     @Query("SELECT * FROM households WHERE householdUuid = :uuid LIMIT 1")
     suspend fun getHouseholdByUuid(uuid: String): Household?
 
@@ -54,3 +71,4 @@ interface HouseholdDao {
     """)
     fun getHouseSummary(): Flow<List<HouseSummary>>
 }
+

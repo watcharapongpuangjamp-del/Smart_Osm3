@@ -362,16 +362,22 @@ class PersonViewModel(
                 }
             }
 
-            // Find or create household
-            var household = repository.getHouseholdByNo(cleanHouseNo)
+            // A house number is not unique across villages. Match the complete address.
+            val cleanVillageNo = villageNo.trim()
+            val cleanSubdistrict = subdistrict.trim()
+            val cleanDistrict = district.trim()
+            val cleanProvince = province.trim()
+            var household = repository.getHouseholdByAddress(
+                cleanHouseNo, cleanVillageNo, cleanSubdistrict, cleanDistrict, cleanProvince
+            )
             if (household == null) {
                 val newHousehold = Household(
                     householdUuid = java.util.UUID.randomUUID().toString(),
                     houseNo = cleanHouseNo,
-                    villageNo = villageNo.trim(),
-                    subdistrict = subdistrict.trim(),
-                    district = district.trim(),
-                    province = province.trim(),
+                    villageNo = cleanVillageNo,
+                    subdistrict = cleanSubdistrict,
+                    district = cleanDistrict,
+                    province = cleanProvince,
                     dataStatus = dataStatus,
                     lastModified = System.currentTimeMillis()
                 )
@@ -557,3 +563,4 @@ class PersonViewModel(
         }
     }
 }
+
