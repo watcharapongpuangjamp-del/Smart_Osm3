@@ -67,6 +67,16 @@ class PersonRepository(
         return householdDao.getHouseholdByNo(houseNo)
     }
 
+    suspend fun getHouseholdByAddress(
+        houseNo: String,
+        villageNo: String,
+        subdistrict: String,
+        district: String,
+        province: String
+    ): Household? = householdDao.getHouseholdByAddress(
+        houseNo, villageNo, subdistrict, district, province
+    )
+
     suspend fun getHouseholdByUuid(uuid: String): Household? {
         return householdDao.getHouseholdByUuid(uuid)
     }
@@ -140,3 +150,4 @@ class PersonRepository(
     suspend fun getAllHouseholds(): List<Household> = householdDao.getAllHouseholds()
     suspend fun getAllPersonsList(): List<Person> = personDao.getAllPersonsList()
 }
+
