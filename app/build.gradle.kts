@@ -65,7 +65,7 @@ android {
     includeInApk = false
     includeInBundle = true
   }
-  packagingOptions {
+  packaging {
     resources.excludes.addAll(
       listOf(
         "META-INF/DEPENDENCIES",

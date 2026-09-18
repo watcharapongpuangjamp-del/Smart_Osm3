@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.ui.components.ThemeQuickToggleButton
 import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.MintAccent
@@ -96,7 +99,7 @@ fun LoginScreen(
                             onClick = onNavigateBack,
                             modifier = Modifier.testTag("btn_login_back")
                         ) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "กลับ", tint = Color.White)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "กลับ", tint = Color.White)
                         }
                     }
                 },
@@ -358,6 +361,78 @@ fun LoginScreen(
                             }
                         }
 
+                        if (activeUser.isAnonymous) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFFEF3C7),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFFD97706),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = "ใช้งานในโหมดผู้ใช้ชั่วคราว (Guest)",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF92400E)
+                                        )
+                                    }
+                                    Text(
+                                        text = "ข้อมูลจะถูกบันทึกเฉพาะในเครื่องนี้ แนะนำให้ลงทะเบียนหรือเข้าสู่ระบบด้วยบัญชี Google เพื่อสำรองข้อมูลอย่างปลอดภัย",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF78350F)
+                                    )
+                                    Button(
+                                        onClick = {
+                                            authViewModel.signInOrRegisterWithGoogle(
+                                                context = context,
+                                                customClientId = customWebClientId.takeIf { it.isNotBlank() },
+                                                isRegister = true
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .testTag("btn_google_register_anon"),
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF1F2937),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                                contentDescription = "Google Logo",
+                                                tint = Color.Unspecified,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Text(
+                                                text = "ลงทะเบียน หรือ เข้าสู่ระบบ ด้วย Google",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Button(
@@ -369,7 +444,7 @@ fun LoginScreen(
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                         ) {
-                            Icon(Icons.Filled.ArrowForward, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("เข้าสู่ระบบสำรวจ", fontWeight = FontWeight.Bold)
                         }
@@ -389,6 +464,33 @@ fun LoginScreen(
                             }
                         }
 
+                        // Option to switch/link with Google
+                        OutlinedButton(
+                            onClick = {
+                                authViewModel.signInOrRegisterWithGoogle(
+                                    context = context,
+                                    customClientId = customWebClientId.takeIf { it.isNotBlank() }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("btn_google_switch_account"),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = "Google",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "สลับบัญชี / ลงทะเบียนใหม่ด้วย Google",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
                         OutlinedButton(
                             onClick = { authViewModel.signOut() },
                             modifier = Modifier
@@ -398,14 +500,14 @@ fun LoginScreen(
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Icon(Icons.Filled.ExitToApp, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("ออกจากระบบ (Sign Out)")
                         }
                     }
                 }
             } else {
-                // Main Google Sign-In Card (Android Credential Manager)
+                // Main Google Sign-In & Registration Card (Android Credential Manager)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -416,58 +518,115 @@ fun LoginScreen(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = "Google",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "ลงทะเบียน หรือ เข้าสู่ระบบ ของ Google",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Google Sign-In & Registration (Credential Manager)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
                         Text(
-                            text = "เข้าสู่ระบบด้วย Google",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "เชื่อมต่อบัญชี Google ของท่านผ่าน Android Credential Manager เพื่อยืนยันตัวตนผู้สำรวจ Smart OSM",
+                            text = "เชื่อมต่อบัญชี Google ของท่านผ่าน Android Credential Manager เพื่อลงทะเบียนบัญชีใหม่ หรือเข้าสู่ระบบทันทีโดยไม่ต้องจำรหัสผ่าน",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
+                        // Main Prominent Button: "ลงทะเบียน หรือ เข้าสู่ระบบ ของ Google"
                         Button(
                             onClick = {
-                                authViewModel.signInWithGoogle(
+                                authViewModel.signInOrRegisterWithGoogle(
                                     context = context,
                                     customClientId = customWebClientId.takeIf { it.isNotBlank() }
                                 )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
+                                .height(54.dp)
                                 .testTag("btn_google_sign_in"),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF1F2937),
                                 contentColor = Color.White
-                            )
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = Color.White,
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            "G",
-                                            fontWeight = FontWeight.ExtraBold,
-                                            fontSize = 16.sp,
-                                            color = Color(0xFF4285F4)
-                                        )
-                                    }
-                                }
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_google_logo),
+                                    contentDescription = "Google Logo",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(24.dp)
+                                )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "ลงชื่อเข้าใช้ด้วย Google",
+                                    text = "ลงทะเบียน หรือ เข้าสู่ระบบ ของ Google",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                        }
+
+                        // Specific Dual Action Buttons for Register vs Login
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    authViewModel.signInOrRegisterWithGoogle(
+                                        context = context,
+                                        customClientId = customWebClientId.takeIf { it.isNotBlank() },
+                                        isRegister = false
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                                    .testTag("btn_google_login_specific"),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("เข้าสู่ระบบ Google", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    authViewModel.signInOrRegisterWithGoogle(
+                                        context = context,
+                                        customClientId = customWebClientId.takeIf { it.isNotBlank() },
+                                        isRegister = true
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                                    .testTag("btn_google_register_specific"),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("ลงทะเบียน Google", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -608,13 +767,55 @@ fun LoginScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                         ) {
                             Icon(
-                                if (selectedAuthTab == 0) Icons.Filled.Login else Icons.Filled.PersonAdd,
+                                if (selectedAuthTab == 0) Icons.AutoMirrored.Filled.Login else Icons.Filled.PersonAdd,
                                 contentDescription = null
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                if (selectedAuthTab == 0) "เข้าสู่ระบบด้วยอีเมล" else "ลงทะเบียนบัญชีใหม่",
+                                if (selectedAuthTab == 0) "เข้าสู่ระบบด้วยอีเมล" else "ลงทะเบียนบัญชีใหม่ด้วยอีเมล",
                                 fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                            Text(
+                                text = "หรือ",
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                authViewModel.signInOrRegisterWithGoogle(
+                                    context = context,
+                                    customClientId = customWebClientId.takeIf { it.isNotBlank() },
+                                    isRegister = selectedAuthTab == 1
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("btn_google_tab_action"),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = "Google",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = if (selectedAuthTab == 0) "เข้าสู่ระบบด้วยบัญชี Google" else "ลงทะเบียนใหม่ด้วยบัญชี Google",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
                             )
                         }
                     }

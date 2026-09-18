@@ -1,5 +1,7 @@
 package com.example
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.example.data.auth.AuthManager
 import com.example.viewmodel.AuthUiState
 import com.example.viewmodel.AuthViewModel
@@ -16,8 +18,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class AuthViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -145,5 +150,41 @@ class AuthViewModelTest {
 
         viewModel.signOut()
         assertEquals(AuthUiState.Idle, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `signInOrRegisterWithGoogle sets error state on failure when isRegister is false`() = runTest(testDispatcher) {
+        val fakeAuthManager = object : AuthManager({ null }) {
+            override suspend fun signInWithGoogle(context: Context, customWebClientId: String?): Result<FirebaseUser> {
+                return Result.failure(IllegalStateException("Google sign-in cancelled"))
+            }
+        }
+        val viewModel = AuthViewModel(fakeAuthManager)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        viewModel.signInOrRegisterWithGoogle(context, isRegister = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        val error = viewModel.uiState.value as AuthUiState.Error
+        assertEquals("เข้าสู่ระบบด้วย Google ไม่สำเร็จ: Google sign-in cancelled", error.message)
+    }
+
+    @Test
+    fun `registerWithGoogle sets error state with register-specific message on failure`() = runTest(testDispatcher) {
+        val fakeAuthManager = object : AuthManager({ null }) {
+            override suspend fun signInWithGoogle(context: Context, customWebClientId: String?): Result<FirebaseUser> {
+                return Result.failure(IllegalStateException("User declined permissions"))
+            }
+        }
+        val viewModel = AuthViewModel(fakeAuthManager)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        viewModel.registerWithGoogle(context)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        val error = viewModel.uiState.value as AuthUiState.Error
+        assertEquals("ลงทะเบียนด้วย Google ไม่สำเร็จ: User declined permissions", error.message)
     }
 }

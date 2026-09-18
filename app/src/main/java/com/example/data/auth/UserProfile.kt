@@ -70,7 +70,7 @@ data class UserProfile(
 
     companion object {
         private val thaiDateFormat by lazy {
-            SimpleDateFormat("d MMM yyyy, HH:mm น.", Locale("th", "TH"))
+            SimpleDateFormat("d MMM yyyy, HH:mm น.", Locale.forLanguageTag("th-TH"))
         }
 
         private fun formatDate(epochMillis: Long): String {

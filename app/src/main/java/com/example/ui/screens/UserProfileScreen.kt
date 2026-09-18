@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
@@ -27,14 +29,13 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
@@ -73,6 +74,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +83,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.R
 import com.example.data.auth.UserProfile
 import com.example.ui.components.ThemeQuickToggleButton
 import com.example.viewmodel.AuthViewModel
@@ -199,6 +202,73 @@ fun UserProfileScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
+                        // If anonymous user, show warning and Google Register/Login action
+                        if (profile.isAnonymous) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFFFEF3C7),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFFD97706),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = "ใช้งานในโหมดผู้ใช้ชั่วคราว (Guest)",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF92400E)
+                                        )
+                                    }
+                                    Text(
+                                        text = "ข้อมูลถูกบันทึกเฉพาะในเครื่องนี้ แนะนำให้ลงทะเบียนหรือเข้าสู่ระบบด้วย Google เพื่อซิงค์และสำรองข้อมูล",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF78350F)
+                                    )
+                                    Button(
+                                        onClick = onNavigateToLogin,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .testTag("btn_profile_upgrade_google"),
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF1F2937),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                                contentDescription = "Google",
+                                                tint = Color.Unspecified,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "ลงทะเบียน หรือ เข้าสู่ระบบ ของ Google",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Switch account / Re-login
                         Button(
                             onClick = onNavigateToLogin,
@@ -227,7 +297,7 @@ fun UserProfileScreen(
                             ),
                             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                         ) {
-                            Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("ออกจากระบบ (Sign Out)", fontWeight = FontWeight.SemiBold)
                         }
@@ -603,7 +673,7 @@ private fun UserDetailsSection(
             // Last Sign In Timestamp
             profile.formattedLastSignInDate?.let { lastSignIn ->
                 DetailItemRow(
-                    icon = Icons.Filled.Login,
+                    icon = Icons.AutoMirrored.Filled.Login,
                     title = "เข้าสู่ระบบล่าสุด (Last Sign In)",
                     value = lastSignIn
                 )
@@ -709,18 +779,50 @@ private fun UnauthenticatedCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            // Prominent Google Register / Login Button
             Button(
                 onClick = onNavigateToLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(52.dp)
                     .testTag("btn_profile_login"),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1F2937),
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
             ) {
-                Icon(Icons.Filled.Login, contentDescription = null, modifier = Modifier.size(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_google_logo),
+                        contentDescription = "Google",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "ลงทะเบียน หรือ เข้าสู่ระบบ ของ Google",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            OutlinedButton(
+                onClick = onNavigateToLogin,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp)
+                    .testTag("btn_profile_login_options"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("เข้าสู่ระบบด้วย Google หรืออีเมล", fontWeight = FontWeight.Bold)
+                Text("ตัวเลือกเข้าสู่ระบบอื่น (อีเมล / บัญชีทดสอบ)", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

@@ -39,23 +39,39 @@ class AuthViewModel(
     }
 
     fun signInWithGoogle(context: Context, customClientId: String? = null) {
-        _uiState.value = AuthUiState.Loading("กำลังเชื่อมต่อ Google Sign-In ผ่าน Credential Manager...")
+        signInOrRegisterWithGoogle(context, customClientId, isRegister = false)
+    }
+
+    fun registerWithGoogle(context: Context, customClientId: String? = null) {
+        signInOrRegisterWithGoogle(context, customClientId, isRegister = true)
+    }
+
+    fun signInOrRegisterWithGoogle(context: Context, customClientId: String? = null, isRegister: Boolean = false) {
+        val loadingMsg = if (isRegister) "กำลังลงทะเบียนด้วย Google ผ่าน Credential Manager..." else "กำลังเชื่อมต่อ Google Sign-In ผ่าน Credential Manager..."
+        _uiState.value = AuthUiState.Loading(loadingMsg)
         viewModelScope.launch {
             val result = authManager.signInWithGoogle(context, customClientId)
             result.fold(
                 onSuccess = { user ->
-                    _uiState.value = AuthUiState.Success(user, "เข้าสู่ระบบด้วย Google สำเร็จ")
+                    val successMsg = if (isRegister) "ลงทะเบียนด้วยบัญชี Google สำเร็จ" else "เข้าสู่ระบบด้วย Google สำเร็จ"
+                    _uiState.value = AuthUiState.Success(user, successMsg)
                 },
                 onFailure = { error ->
                     val userFriendlyMsg = when {
                         error is androidx.credentials.exceptions.GetCredentialCancellationException ->
-                            "ยกเลิกการเข้าสู่ระบบด้วย Google"
+                            if (isRegister) "ยกเลิกการลงทะเบียนด้วย Google" else "ยกเลิกการเข้าสู่ระบบด้วย Google"
                         error is androidx.credentials.exceptions.NoCredentialException ->
                             "ไม่พบบัญชี Google ในอุปกรณ์นี้ กรุณาเพิ่มบัญชี Google ในการตั้งค่าเครื่องก่อนใช้งาน หรือใช้การล็อกอินด้วยอีเมล"
                         error.message?.contains("Web Client ID", ignoreCase = true) == true ->
                             error.message ?: "กรุณาระบุ Web Client ID"
-                        else ->
-                            error.message ?: "เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sign-In"
+                        else -> {
+                            val detail = error.message?.takeIf { it.isNotBlank() } ?: "เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sign-In"
+                            if (isRegister) {
+                                "ลงทะเบียนด้วย Google ไม่สำเร็จ: $detail"
+                            } else {
+                                "เข้าสู่ระบบด้วย Google ไม่สำเร็จ: $detail"
+                            }
+                        }
                     }
                     _uiState.value = AuthUiState.Error(userFriendlyMsg, error)
                 }
