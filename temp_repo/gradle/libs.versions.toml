@@ -46,7 +46,6 @@ credentials = "1.5.0"
 googleid = "1.1.1"
 osmdroid = "6.1.18"
 vico = "1.15.0"
-zxing = "3.5.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -112,7 +111,6 @@ osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.
 vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
-zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 
 [plugins]

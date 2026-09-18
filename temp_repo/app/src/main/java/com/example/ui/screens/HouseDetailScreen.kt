@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -18,10 +17,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.ui.graphics.asImageBitmap
-import com.example.utils.QrCodeGenerator
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +50,6 @@ fun HouseDetailScreen(
     
     var personToDelete by remember { mutableStateOf<Person?>(null) }
     var showDeleteHouseholdDialog by remember { mutableStateOf(false) }
-    var showQrDialog by remember { mutableStateOf(false) }
     var deleteErrorMsg by remember { mutableStateOf<String?>(null) }
 
     if (deleteErrorMsg != null) {
@@ -64,31 +59,6 @@ fun HouseDetailScreen(
             text = { Text(deleteErrorMsg ?: "") },
             confirmButton = {
                 Button(onClick = { deleteErrorMsg = null }) { Text("ตกลง") }
-            }
-        )
-    }
-
-    if (showQrDialog && householdWithPersons != null) {
-        AlertDialog(
-            onDismissRequest = { showQrDialog = false },
-            title = { Text("QR Code สำหรับครัวเรือน") },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val bitmap = remember(householdWithPersons!!.household.householdUuid) { 
-                        QrCodeGenerator.generateQrCode(householdWithPersons!!.household.householdUuid) 
-                    }
-                    bitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = "QR Code",
-                            modifier = Modifier.size(256.dp)
-                        )
-                    }
-                    Text("สแกนเพื่อเข้าถึงข้อมูลครัวเรือน", style = MaterialTheme.typography.bodySmall)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showQrDialog = false }) { Text("ปิด") }
             }
         )
     }
@@ -233,9 +203,6 @@ fun HouseDetailScreen(
                                     color = Color.White,
                                     fontWeight = FontWeight.ExtraBold
                                 )
-                            }
-                            IconButton(onClick = { showQrDialog = true }) {
-                                Icon(Icons.Filled.QrCodeScanner, contentDescription = "แสดง QR Code", tint = Color.White)
                             }
                             Box(
                                 modifier = Modifier

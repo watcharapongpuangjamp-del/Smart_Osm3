@@ -149,7 +149,6 @@ dependencies {
   implementation(libs.vico.compose)
   implementation(libs.vico.compose.m3)
   implementation(libs.vico.core)
-  implementation(libs.zxing.core)
   testImplementation("org.mockito:mockito-core:5.11.0")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
   testImplementation(libs.androidx.compose.ui.test.junit4)
