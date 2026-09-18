@@ -7,7 +7,9 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -125,6 +127,12 @@ open class AuthManager(
             }
 
             val credentialManager = CredentialManager.create(context)
+            
+            // Build GetSignInWithGoogleOption for explicit button clicks (supports account addition)
+            val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId)
+                .build()
+
+            // Also build GetGoogleIdOption for existing accounts on device
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(clientId)
@@ -132,6 +140,7 @@ open class AuthManager(
                 .build()
 
             val request = GetCredentialRequest.Builder()
+                .addCredentialOption(signInWithGoogleOption)
                 .addCredentialOption(googleIdOption)
                 .build()
 
@@ -159,11 +168,15 @@ open class AuthManager(
         } catch (e: GetCredentialCancellationException) {
             Log.i(TAG, "User cancelled Google Sign-In prompt")
             Result.failure(e)
+        } catch (e: NoCredentialException) {
+            // Expected on devices or emulators without an active Google account
+            Log.w(TAG, "No Google credentials available on this device: ${e.message}")
+            Result.failure(e)
         } catch (e: GetCredentialException) {
-            Log.e(TAG, "CredentialManager failed: ${e.message}", e)
+            Log.w(TAG, "CredentialManager request failed: ${e.message}")
             Result.failure(e)
         } catch (e: Exception) {
-            Log.e(TAG, "Authentication failed", e)
+            Log.w(TAG, "Authentication failed: ${e.message}")
             Result.failure(e)
         }
     }
@@ -182,7 +195,7 @@ open class AuthManager(
             Log.i(TAG, "Email Sign-In successful. User UID: ${user.uid}")
             Result.success(user)
         } catch (e: Exception) {
-            Log.e(TAG, "Sign-in with email failed", e)
+            Log.w(TAG, "Sign-in with email failed: ${e.message}")
             Result.failure(e)
         }
     }
@@ -201,7 +214,7 @@ open class AuthManager(
             Log.i(TAG, "Email Registration successful. User UID: ${user.uid}")
             Result.success(user)
         } catch (e: Exception) {
-            Log.e(TAG, "Registration with email failed", e)
+            Log.w(TAG, "Registration with email failed: ${e.message}")
             Result.failure(e)
         }
     }
@@ -221,7 +234,7 @@ open class AuthManager(
             Log.i(TAG, "Anonymous Sign-In successful. User UID: ${user.uid}")
             Result.success(user)
         } catch (e: Exception) {
-            Log.e(TAG, "Anonymous sign-in failed", e)
+            Log.w(TAG, "Anonymous sign-in failed: ${e.message}")
             Result.failure(e)
         }
     }
@@ -235,7 +248,7 @@ open class AuthManager(
             updateUser(null)
             Log.i(TAG, "User signed out successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error signing out", e)
+            Log.w(TAG, "Error signing out: ${e.message}")
         }
     }
 }

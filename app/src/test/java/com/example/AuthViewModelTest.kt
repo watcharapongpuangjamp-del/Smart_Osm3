@@ -1,6 +1,8 @@
 package com.example
 
 import android.content.Context
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.auth.AuthManager
 import com.example.viewmodel.AuthUiState
@@ -186,5 +188,44 @@ class AuthViewModelTest {
         assertTrue(viewModel.uiState.value is AuthUiState.Error)
         val error = viewModel.uiState.value as AuthUiState.Error
         assertEquals("ลงทะเบียนด้วย Google ไม่สำเร็จ: User declined permissions", error.message)
+    }
+
+    @Test
+    fun `signInOrRegisterWithGoogle handles NoCredentialException with clear guidance message`() = runTest(testDispatcher) {
+        val fakeAuthManager = object : AuthManager({ null }) {
+            override suspend fun signInWithGoogle(context: Context, customWebClientId: String?): Result<FirebaseUser> {
+                return Result.failure(NoCredentialException("No credentials available"))
+            }
+        }
+        val viewModel = AuthViewModel(fakeAuthManager)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        viewModel.signInOrRegisterWithGoogle(context, isRegister = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        val error = viewModel.uiState.value as AuthUiState.Error
+        assertEquals(
+            "ไม่พบบัญชี Google ในอุปกรณ์นี้ กรุณาเพิ่มบัญชี Google ในการตั้งค่าเครื่องก่อนใช้งาน หรือใช้การล็อกอินด้วยอีเมล",
+            error.message
+        )
+    }
+
+    @Test
+    fun `signInOrRegisterWithGoogle handles cancellation gracefully`() = runTest(testDispatcher) {
+        val fakeAuthManager = object : AuthManager({ null }) {
+            override suspend fun signInWithGoogle(context: Context, customWebClientId: String?): Result<FirebaseUser> {
+                return Result.failure(GetCredentialCancellationException("User cancelled"))
+            }
+        }
+        val viewModel = AuthViewModel(fakeAuthManager)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        viewModel.signInOrRegisterWithGoogle(context, isRegister = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        val error = viewModel.uiState.value as AuthUiState.Error
+        assertEquals("ยกเลิกการเข้าสู่ระบบด้วย Google", error.message)
     }
 }
